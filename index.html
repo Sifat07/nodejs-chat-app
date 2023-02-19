@@ -23,6 +23,7 @@
   integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
   crossorigin="anonymous"
 ></script>
+<script src="/socket.io/socket.io.js"></script>
 
 <div class="container">
   <br />
@@ -43,6 +44,7 @@
 </div>
 
 <script>
+  const socket = io();
   $(() => {
     $("#send").click(() => {
       const message = { name: $("#name").val(), message: $("#message").val() };
@@ -50,6 +52,8 @@
     });
     getMessages();
   });
+
+  socket.on("message", addMessages);
 
   function addMessages(message) {
     $("#messages").append(
