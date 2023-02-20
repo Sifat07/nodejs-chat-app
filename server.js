@@ -9,6 +9,8 @@ app.use(express.static(__dirname));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
+mongoose.Promise = Promise;
+
 const dbUrl =
   "mongodb+srv://sifat:S140693khan@cluster0.rg5cbna.mongodb.net/test";
 
@@ -23,19 +25,30 @@ app.get("/messages", (req, res) => {
   });
 });
 
-app.post("/messages", (req, res) => {
-  const message = new Message(req.body);
+app.post("/messages", async (req, res) => {
+  try {
+    const message = new Message(req.body);
 
-  message.save((err) => {
-    if (err) sendStatus(500);
-    io.emit("message", req.body);
+    const savedMessage = await message.save();
+
+    console.log("saved");
+    const censored = await Message.findOne({ message: "badword" });
+    if (censored) await Message.deleteOne({ _id: censored.id });
+    else io.emit("message", req.body);
     res.sendStatus(200);
-  });
+  } catch (error) {
+    res.sendStatus(500);
+    return console.log(error);
+  } finally {
+    console.log("message post called");
+  }
 });
 
 io.on("connection", (socket) => {
   console.log("a user is connected");
 });
+
+mongoose.set("strictQuery", false);
 
 mongoose.connect(dbUrl, { useNewUrlParser: true }, (err) => {
   console.log("mongo db connection", err);
